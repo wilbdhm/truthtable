@@ -64,46 +64,52 @@ int main(int argc, char * argv[]) {
                     break;
 
                 case '=':
-                    if (lex_i + 1 >= len) {
+                    if (lex_i + 1 >= len)
                         l_err++;
-                    } else 
-                        if (buffer[lex_i + 1] == '>'){
-                            lex_out[tok_i].type = TOK_IMPL;
-                            lex_i++;
-                        } else l_err++;
 
+                    else if (buffer[lex_i + 1] == '>') {
+                        lex_out[tok_i].type = TOK_IMPL;
+                        lex_i++;
+                    }
+                    else
+                        l_err++;
 
                     break;
 
                 case '<':
-                    if (lex_i + 2 >= len){
+                    if (lex_i + 2 >= len)
                         l_err++;
-                    } else
-                        if (buffer[lex_i + 1] == '=' && buffer[lex_i + 2] == '>'){
-                            lex_out[tok_i].type = TOK_EQUIV;
-                            lex_i += 2;
-                        } else l_err++;
+
+                    else if (buffer[lex_i + 1] == '=' && buffer[lex_i + 2] == '>') {
+                        lex_out[tok_i].type = TOK_EQUIV;
+                        lex_i += 2;
+                    }
+                    else
+                        l_err++;
+
                     break;
 
                 default:
-                    if (isalpha(buffer[lex_i]) && islower(buffer[lex_i])){
+                    if (isalpha(buffer[lex_i]) && islower(buffer[lex_i])) {
                         lex_out[tok_i].type = TOK_VAR;
                         lex_out[tok_i].value = buffer[lex_i];
-                    } else l_err++;
+                    }
+                    else
+                        l_err++;
+
                     break;
             }
 
             ++tok_i;
         }
 
-        if (l_err != 0){
-            fprintf(stderr, "Unknown symbol: %c \n", buffer[lex_i]);   
+        if (l_err != 0) {
+            fprintf(stderr, "Unknown symbol: %c\n", buffer[lex_i]);
             free(lex_out);
             free(buffer);
             return -1;
         }
     }
-
     free(lex_out);
     free(buffer);
     return 0;
