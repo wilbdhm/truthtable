@@ -72,7 +72,6 @@ int main(int argc, char * argv[]) {
                             lex_i++;
                         } else l_err++;
 
-
                     break;
 
                 case '<':
@@ -95,7 +94,6 @@ int main(int argc, char * argv[]) {
 
             ++tok_i;
         }
-
         if (l_err != 0){
             fprintf(stderr, "Unknown symbol: %c \n", buffer[lex_i]);   
             free(lex_out);
@@ -103,7 +101,7 @@ int main(int argc, char * argv[]) {
             return -1;
         }
     }
-
+    
     free(lex_out);
     free(buffer);
     return 0;
