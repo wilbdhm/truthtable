@@ -9,7 +9,7 @@ truthtable: $(OBJS)
 	$(CC) -o $@ $^
 
 obj/%.o: src/%.c
-	$(CC) -c -o $@ $^ -I$(HDRDIR)
+	$(CC) -c $(CFLAGS) -o $@ $^ -I$(HDRDIR)
 
 .PHONY: build debug clean release
 build: truthtable
