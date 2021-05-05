@@ -25,4 +25,18 @@ void listPushBack(struct List *, struct Token);
 struct Token listPopFront(struct List *);
 struct Token listPopBack(struct List *);
 
+/* ITERATION
+ * If you want to iterate through a list,
+ * be sure to do it like this:
+ *
+ * 1. front to back
+ * for (struct ListElement * it = list->first; it != NULL; it = it->next)
+ *
+ * 2. back to front
+ * for (struct ListElement * it = list->last; it != NULL; it = it->prev)
+ * 
+ * If you choose not to take this word of advice seriously,
+ * you will burn in hell, surrounded by segmentation faults.
+ */
+
 #endif

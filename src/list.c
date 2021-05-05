@@ -25,8 +25,10 @@ void listPushFront(struct List * list, struct Token token) {
         el->next = list->first;
         list->first->prev = el;
     }
-    else
+    else {
         el->next = NULL;
+        list->last = el;
+    }
 
     list->first = el;
     list->length++;
@@ -42,10 +44,12 @@ void listPushBack(struct List * list, struct Token token) {
         el->prev = list->last;
         list->last->next = el;
     }
-    else
+    else {
         el->prev = NULL;
+        list->first = el;
+    }
 
-    list->first = el;
+    list->last = el;
     list->length++;
 }
 

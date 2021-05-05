@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include "token.h"
+#include "list.h"
 
 const char * ALLOC_FAIL_MSG = "Failed to allocate memory.\n";
 
@@ -66,7 +67,6 @@ int main(int argc, char * argv[]) {
                 case '=':
                     if (lex_i + 1 >= len)
                         l_err++;
-
                     else if (buffer[lex_i + 1] == '>') {
                         lex_out[tok_i].type = TOK_IMPL;
                         lex_i++;
@@ -79,7 +79,6 @@ int main(int argc, char * argv[]) {
                 case '<':
                     if (lex_i + 2 >= len)
                         l_err++;
-
                     else if (buffer[lex_i + 1] == '=' && buffer[lex_i + 2] == '>') {
                         lex_out[tok_i].type = TOK_EQUIV;
                         lex_i += 2;
