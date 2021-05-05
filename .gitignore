@@ -1,3 +1,5 @@
 truthtable
 obj/
 src/.local.vimrc
+.local.vimrc
+.gdb_history
