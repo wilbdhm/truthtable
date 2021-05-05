@@ -12,7 +12,7 @@ struct ListElement {
 struct List {
 	struct ListElement * first;
 	struct ListElement * last;
-	size_t length;
+	unsigned int length;
 };
 
 // MEMORY ALLOC/DEALLOC
@@ -22,7 +22,7 @@ void listDestroy(struct List *);
 // ADDING/REMOVING ELEMENTS
 void listPushFront(struct List *, struct Token);
 void listPushBack(struct List *, struct Token);
-void listPopFront(struct List *, struct Token);
-void listPopBack(struct List *, struct Token);
+struct Token listPopFront(struct List *);
+struct Token listPopBack(struct List *);
 
 #endif
