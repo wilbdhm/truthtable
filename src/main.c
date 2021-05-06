@@ -88,6 +88,14 @@ int main(int argc, char * argv[]) {
 
                     break;
 
+                case '0':
+                    lex_out[tok_i].type = TOK_ZERO;
+                    break;
+
+                case '1':
+                    lex_out[tok_i].type = TOK_ONE;
+                    break;
+
                 default:
                     if (isalpha(buffer[lex_i]) && islower(buffer[lex_i])) {
                         lex_out[tok_i].type = TOK_VAR;
