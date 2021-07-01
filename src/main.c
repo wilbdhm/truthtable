@@ -201,14 +201,57 @@ int main(int argc, char * argv[]) {
             listPushFront(postfix, it->value);
         }
     }
-    /*
-    for (struct ListElement * it = postfix->first; it != NULL; it = it->next){
-        fprintf(stdout, "%d %c \n", it->value.type, it->value.value);
+    // evaluation
+    {
+        bool var_table[26] = { 0 }; // 26 lowercase letters
+        bool var_used[26] = { 0 };
+        unsigned int var_count = 0;
+
+        for (struct ListElement * it = postfix->first; it != NULL; it = it->next) {
+            if (it->value.type != TOK_VAR);
+            else if (it->value.value >= 'a' && it->value.value <= 'z')
+                var_used[it->value.value - 'a'] = true;
+            else {
+                fprintf(stderr, "Variable parse error: %c (%u)\n", it->value.value,
+                        it->value.value);
+                goto death;
+            }
+        }
+
+        for (int i = 0; i < 26; ++i) {
+            if (var_used[i]) {
+                var_count++;
+                printf("%c | ", i + 'a');
+            }
+        }
+
+        puts("");
+
+        // generating all possible arrangements of 0s and 1s
+        // by scanning binary digits of numbers from 0 to 2^var_count - 1
+        for (int i = 0; i < (1 << var_count); ++i) {
+            for (int j = var_count - 1, k = 0; k < 26; ++k) {
+                if (var_used[k]) {
+                    var_table[k] = (i & (1 << j)) >> j;
+                    j--;
+
+                    if (j < 0)
+                        break;
+                }
+            }
+
+            for (int j = 0; j < 26; ++j) {
+                if (var_used[j])
+                    printf("%u | ", var_table[j]);
+            }
+
+            puts("");
+        }
     }
-    */
+death:
     listDestroy(infix);
-    listDestroy(postfix);
     listDestroy(operators);
+    listDestroy(postfix);
     free(lex_out);
     free(buffer);
     return 0;
