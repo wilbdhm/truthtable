@@ -14,22 +14,22 @@ int main(int argc, char * argv[]) {
     struct List * infix = listMake();
     struct List * operators = listMake();
     struct List * postfix = listMake();
-    
+
     if (!infix) {
         fputs(ALLOC_FAIL_MSG, stderr);
         return -1;
     }
-    
+
     if (!operators) {
         fputs(ALLOC_FAIL_MSG, stderr);
         return -1;
     }
-    
+
     if (!postfix) {
         fputs(ALLOC_FAIL_MSG, stderr);
         return -1;
     }
-    
+
     if (!buffer) {
         fputs(ALLOC_FAIL_MSG, stderr);
         return -1;
@@ -47,12 +47,12 @@ int main(int argc, char * argv[]) {
 
     size_t len = strlen(buffer); // might be useful later on
     buffer = (char *)realloc(buffer, len * sizeof(char));
-    
-    for(size_t i = 0, t_len = len; i < t_len; i++){
-        if(buffer[i] == '~')
+
+    for (size_t i = 0, t_len = len; i < t_len; i++) {
+        if (buffer[i] == '~')
             len++;
     }
-    
+
     struct Token * lex_out = (struct Token *)malloc(len * sizeof(struct Token));
 
     if (!lex_out) {
@@ -77,15 +77,17 @@ int main(int argc, char * argv[]) {
                     break;
 
                 case '~':
-                    if(lex_i + 1 < len && buffer[lex_i + 1] != '~'){
+                    if (lex_i + 1 < len && buffer[lex_i + 1] != '~') {
                         lex_out[tok_i++].type = TOK_ZERO;
                         lex_out[tok_i].type = TOK_NOT;
-                    } else {
+                    }
+                    else {
                         fprintf(stderr, "Wrong use of '~'\n");
                         free(lex_out);
                         free(buffer);
                         return -1;
-                        }
+                    }
+
                     break;
 
                 case '&':
@@ -148,58 +150,55 @@ int main(int argc, char * argv[]) {
             free(buffer);
             return -1;
         }
-        
+
         len = tok_i;
     }
-    
     //infix to postfix
     {
-        for(size_t tok_i = 0; tok_i < len; ++tok_i){
+        for (size_t tok_i = 0; tok_i < len; ++tok_i)
             listPushBack(infix, lex_out[tok_i]);
-        }
-        
-        for (struct ListElement * it = infix->first; it != NULL; it = it->next){
-        
-            switch(it->value.type){
-            
+
+        for (struct ListElement * it = infix->first; it != NULL; it = it->next) {
+            switch (it->value.type) {
                 case TOK_VAR:
                 case TOK_ZERO:
                 case TOK_ONE:
                     listPushFront(postfix, it->value);
                     break;
-                    
+
                 case TOK_RB:
-                    while(operators->length && operators->first->value.type != TOK_LB)
+                    while (operators->length && operators->first->value.type != TOK_LB)
                         listPushFront(postfix, listPopFront(operators));
-                        
-                    if(operators->length)
+
+                    if (operators->length)
                         listPopFront(operators);
-                    else{
+                    else {
                         fprintf(stderr, "Missing left bracket!\n");
                         return 1;
                     }
+
                     break;
-                    
+
                 case TOK_LB:
                     listPushFront(operators, it->value);
                     break;
-                    
+
                 default:
-                    if(operators->first && operators->first->value.type == TOK_NOT){
+                    if (operators->first && operators->first->value.type == TOK_NOT)
                         listPushFront(postfix, listPopFront(operators));
-                    }
+
                     listPushFront(operators, it->value);
                     break;
             }
         }
-        
-        for (struct ListElement * it = operators->first; it != NULL; it = it->next){
-            if(it->value.type == TOK_LB){
+
+        for (struct ListElement * it = operators->first; it != NULL; it = it->next) {
+            if (it->value.type == TOK_LB) {
                 fprintf(stderr, "Missing right bracket!\n");
                 return 1;
-            }     
-            
-            listPushFront(postfix, it->value);  
+            }
+
+            listPushFront(postfix, it->value);
         }
     }
     /*
@@ -210,7 +209,6 @@ int main(int argc, char * argv[]) {
     listDestroy(infix);
     listDestroy(postfix);
     listDestroy(operators);
-    
     free(lex_out);
     free(buffer);
     return 0;
