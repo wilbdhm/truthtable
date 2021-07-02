@@ -41,6 +41,7 @@ int main(int argc, char * argv[]) {
     }
 
     size_t len = strlen(buffer); // might be useful later on
+    size_t buflen = len;
     buffer = (char *)realloc(buffer, len * sizeof(char));
     /* Following error appeared in valgrind. Further investigation advised.
      * ==9155== Invalid read of size 1
@@ -50,7 +51,7 @@ int main(int argc, char * argv[]) {
      * ==9155==    by 0x109614: main (main.c:44)
      */
 
-    for (size_t i = 0, t_len = len; i < t_len; i++) {
+    for (size_t i = 0; i < buflen; i++) {
         if (buffer[i] == '~')
             len++;
     }
@@ -227,6 +228,32 @@ int main(int argc, char * argv[]) {
             }
         }
 
+        // pretty-print expression
+        for (int i = 0; i < buflen;) {
+            switch (buffer[i]) {
+                case '&':
+                case '|':
+                    printf(" %c ", buffer[i]);
+                    ++i;
+                    break;
+
+                case '<':
+                    fputs(" <=> ", stdout);
+                    i += 3;
+                    break;
+
+                case '=':
+                    fputs(" => ", stdout);
+                    i += 2;
+                    break;
+
+                default:
+                    putchar(buffer[i]);
+                    ++i;
+                    break;
+            }
+        }
+
         puts("");
 
         // generating all possible arrangements of 0s and 1s
@@ -256,7 +283,7 @@ int main(int argc, char * argv[]) {
                 else if (safety_c > 0) { // may cause a segfault
                     struct Token t2 = listPopFront(rpn_stack);
                     struct Token t3 = listPopFront(rpn_stack);
-					// assigning logical variables
+                    // assigning logical variables
                     bool p;
                     bool q;
                     bool result;
