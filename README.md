@@ -73,4 +73,4 @@ Use `tr` and piping:
     T | T | T | T
 
 ### How many variables can I use?
-In principle, 26 lowercase letters of the English alphabet are available. This is more than enough, as a truth table of 26 variables would have 2^26 = 67108864 rows.
+In principle, the 26 lowercase letters of the English alphabet are available. This is more than enough, as a truth table of 26 variables would have 2^26 = 67108864 rows.
