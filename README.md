@@ -63,6 +63,7 @@ Use `tr` and piping:
 
     $ echo "c => (a & b)" | ./truthtable | tr 10 TF
     a | b | c | c => (a & b)
+    F | F | F | F
     F | F | F | T
     F | F | T | F
     F | T | F | T
@@ -71,3 +72,6 @@ Use `tr` and piping:
     T | F | T | F
     T | T | F | T
     T | T | T | T
+
+### How many variables can I use?
+In principle, 26 lowercase letters of the English alphabet are available. This is more than enough, as a truth table of 26 variables would have 2^26 = 67108864 rows.
