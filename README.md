@@ -63,7 +63,6 @@ Use `tr` and piping:
 
     $ echo "c => (a & b)" | ./truthtable | tr 10 TF
     a | b | c | c => (a & b)
-    F | F | F | F
     F | F | F | T
     F | F | T | F
     F | T | F | T
