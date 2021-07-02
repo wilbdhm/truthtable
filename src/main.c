@@ -249,21 +249,19 @@ int main(int argc, char * argv[]) {
             for (struct ListElement * it = postfix->last; it != NULL; it = it->prev) {
                 struct Token t1 = it->value;
 
-                if (t1.type == TOK_VAR || t1.type == TOK_ONE || t1.type == TOK_ZERO)
+                if (t1.type == TOK_VAR || t1.type == TOK_ONE || t1.type == TOK_ZERO) {
                     listPushFront(rpn_stack, t1);
-                else if (safety_c > 1) { // may cause a segfault
-                    it = it->prev;
                     safety_c--;
-                    struct Token t2 = it->value;
-                    it = it->prev;
-                    safety_c--;
-                    struct Token t3 = it->value;
-                    // assigning logical variables
+                }
+                else if (safety_c > 0) { // may cause a segfault
+                    struct Token t2 = listPopFront(rpn_stack);
+                    struct Token t3 = listPopFront(rpn_stack);
+					// assigning logical variables
                     bool p;
                     bool q;
                     bool result;
 
-                    if (t2.type == TOK_VAR)
+                    if (t2.type == TOK_VAR) // yes, the order is reversed
                         q = var_table[t2.value - 'a'];
                     else
                         q = t2.type == TOK_ONE;
@@ -271,7 +269,7 @@ int main(int argc, char * argv[]) {
                     if (t3.type == TOK_VAR)
                         p = var_table[t3.value - 'a'];
                     else
-                        q = t3.type == TOK_ONE;
+                        p = t3.type == TOK_ONE;
 
                     // logical evaluation
                     switch (t1.type) {
@@ -292,7 +290,7 @@ int main(int argc, char * argv[]) {
                             break;
 
                         case TOK_NOT:
-                            result = !p; // may need a change
+                            result = !q;
                             break;
 
                         default:
@@ -312,8 +310,6 @@ int main(int argc, char * argv[]) {
                     ERR_EXIT = EVAL_ERROR;
                     goto death;
                 }
-
-                safety_c--;
             }
 
             if (rpn_stack->length > 1) {
