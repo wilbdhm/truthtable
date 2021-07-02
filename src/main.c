@@ -8,35 +8,30 @@
 
 const char * ALLOC_FAIL_MSG = "Failed to allocate memory.\n";
 
+enum {
+    ALLOC_ERROR = 1,
+    INPUT_ERROR,
+    LEX_ERROR,
+    PARSE_ERROR,
+    EVAL_ERROR
+} ERROR_CODE;
+
 int main(int argc, char * argv[]) {
     char * buffer = NULL;
     buffer = (char *)malloc(8192 * sizeof(char));
     struct List * infix = listMake();
     struct List * operators = listMake();
     struct List * postfix = listMake();
+    struct List * rpn_stack = listMake();
+    int ERR_EXIT = 0;
 
-    if (!infix) {
+    if (!infix || !operators || !postfix || !rpn_stack || !buffer) {
         fputs(ALLOC_FAIL_MSG, stderr);
-        return -1;
-    }
-
-    if (!operators) {
-        fputs(ALLOC_FAIL_MSG, stderr);
-        return -1;
-    }
-
-    if (!postfix) {
-        fputs(ALLOC_FAIL_MSG, stderr);
-        return -1;
-    }
-
-    if (!buffer) {
-        fputs(ALLOC_FAIL_MSG, stderr);
-        return -1;
+        return ALLOC_ERROR;
     }
 
     if (fgets(buffer, 8192, stdin) == NULL)
-        return 1;
+        return INPUT_ERROR;
 
     for (int i = 0, j = 0, l = strlen(buffer); i <= l; i++) {
         if (!isspace(buffer[i])) {
@@ -47,6 +42,13 @@ int main(int argc, char * argv[]) {
 
     size_t len = strlen(buffer); // might be useful later on
     buffer = (char *)realloc(buffer, len * sizeof(char));
+    /* Following error appeared in valgrind. Further investigation advised.
+     * ==9155== Invalid read of size 1
+     * ==9155==    at 0x1099F0: main (main.c:64)
+     * ==9155==  Address 0x4a4a247 is 0 bytes after a block of size 7 alloc'd
+     * ==9155==    at 0x484383F: realloc (vg_replace_malloc.c:1192)
+     * ==9155==    by 0x109614: main (main.c:44)
+     */
 
     for (size_t i = 0, t_len = len; i < t_len; i++) {
         if (buffer[i] == '~')
@@ -57,7 +59,7 @@ int main(int argc, char * argv[]) {
 
     if (!lex_out) {
         fputs(ALLOC_FAIL_MSG, stderr);
-        return -1;
+        return ALLOC_ERROR;
     }
 
     // lexing
@@ -83,9 +85,8 @@ int main(int argc, char * argv[]) {
                     }
                     else {
                         fprintf(stderr, "Wrong use of '~'\n");
-                        free(lex_out);
-                        free(buffer);
-                        return -1;
+                        ERR_EXIT = LEX_ERROR;
+                        goto death;
                     }
 
                     break;
@@ -146,9 +147,8 @@ int main(int argc, char * argv[]) {
 
         if (l_err != 0) {
             fprintf(stderr, "Unknown symbol: %c\n", buffer[lex_i]);
-            free(lex_out);
-            free(buffer);
-            return -1;
+            ERR_EXIT = LEX_ERROR;
+            goto death;
         }
 
         len = tok_i;
@@ -174,7 +174,8 @@ int main(int argc, char * argv[]) {
                         listPopFront(operators);
                     else {
                         fprintf(stderr, "Missing left bracket!\n");
-                        return 1;
+                        ERR_EXIT = PARSE_ERROR;
+                        goto death;
                     }
 
                     break;
@@ -214,6 +215,7 @@ int main(int argc, char * argv[]) {
             else {
                 fprintf(stderr, "Variable parse error: %c (%u)\n", it->value.value,
                         it->value.value);
+                ERR_EXIT = PARSE_ERROR;
                 goto death;
             }
         }
@@ -233,6 +235,7 @@ int main(int argc, char * argv[]) {
             for (int j = var_count - 1, k = 0; k < 26; ++k) {
                 if (var_used[k]) {
                     var_table[k] = (i & (1 << j)) >> j;
+                    printf("%u | ", var_table[k]);
                     j--;
 
                     if (j < 0)
@@ -240,19 +243,100 @@ int main(int argc, char * argv[]) {
                 }
             }
 
-            for (int j = 0; j < 26; ++j) {
-                if (var_used[j])
-                    printf("%u | ", var_table[j]);
+            // the main dish - evaluation
+            int safety_c = postfix->length;
+
+            for (struct ListElement * it = postfix->last; it != NULL; it = it->prev) {
+                struct Token t1 = it->value;
+
+                if (t1.type == TOK_VAR || t1.type == TOK_ONE || t1.type == TOK_ZERO)
+                    listPushFront(rpn_stack, t1);
+                else if (safety_c > 1) { // may cause a segfault
+                    it = it->prev;
+                    safety_c--;
+                    struct Token t2 = it->value;
+                    it = it->prev;
+                    safety_c--;
+                    struct Token t3 = it->value;
+                    // assigning logical variables
+                    bool p;
+                    bool q;
+                    bool result;
+
+                    if (t2.type == TOK_VAR)
+                        q = var_table[t2.value - 'a'];
+                    else
+                        q = t2.type == TOK_ONE;
+
+                    if (t3.type == TOK_VAR)
+                        p = var_table[t3.value - 'a'];
+                    else
+                        q = t3.type == TOK_ONE;
+
+                    // logical evaluation
+                    switch (t1.type) {
+                        case TOK_AND:
+                            result = p && q;
+                            break;
+
+                        case TOK_OR:
+                            result = p || q;
+                            break;
+
+                        case TOK_IMPL:
+                            result = (!p) || q;
+                            break;
+
+                        case TOK_EQUIV:
+                            result = p == q;
+                            break;
+
+                        case TOK_NOT:
+                            result = !p; // may need a change
+                            break;
+
+                        default:
+                            fprintf(stderr, "Evaluation error: Expected an operator.\n");
+                            ERR_EXIT = EVAL_ERROR;
+                            goto death;
+                    }
+
+                    struct Token tok_result;
+
+                    tok_result.type = result ? TOK_ONE : TOK_ZERO;
+
+                    listPushFront(rpn_stack, tok_result);
+                }
+                else {
+                    fprintf(stderr, "Evaluation error at token: %d\n", postfix->length - safety_c);
+                    ERR_EXIT = EVAL_ERROR;
+                    goto death;
+                }
+
+                safety_c--;
             }
 
-            puts("");
+            if (rpn_stack->length > 1) {
+                fprintf(stderr,
+                        "Evaluation error: the stack contains more than one element.\n");
+                ERR_EXIT = EVAL_ERROR;
+                goto death;
+            }
+            else if (rpn_stack->length < 1) {
+                fprintf(stderr, "Evaluation error: the stack is empty.\n");
+                ERR_EXIT = EVAL_ERROR;
+                goto death;
+            }
+
+            printf("%d\n", listPopFront(rpn_stack).type == TOK_ONE);
         }
     }
 death:
     listDestroy(infix);
     listDestroy(operators);
     listDestroy(postfix);
+    listDestroy(rpn_stack);
     free(lex_out);
     free(buffer);
-    return 0;
+    return ERR_EXIT;
 }
